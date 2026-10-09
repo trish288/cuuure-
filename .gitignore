@@ -2,4 +2,3 @@ node_modules
 .env
 cuure.db
 service-account.json
-env.js

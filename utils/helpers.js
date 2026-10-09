@@ -9,13 +9,24 @@ const { appointmentsCache } = require("../db/initDB");
 /* ===============================
    MAIN MENU
 ================================ */
-function mainMenu() {
-  return (
-    "Please choose one of the options below:\n\n" +
-    "1️⃣ Book a doctor appointment\n" +
-    "2️⃣ View my appointments\n" +
-    "3️⃣ Contact support"
-  );
+function getMainMenuRows() {
+  return [
+    {
+      id: "menu_book",
+      title: "Book Appointment",
+      description: "Schedule a doctor visit",
+    },
+    {
+      id: "menu_view",
+      title: "View Appointments",
+      description: "Check your existing bookings",
+    },
+    {
+      id: "menu_support",
+      title: "Contact Support",
+      description: "Get help from Cuure.health",
+    },
+  ];
 }
 
 /* ===============================

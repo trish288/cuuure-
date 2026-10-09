@@ -17,12 +17,23 @@ const {
 
 const {
   mainMenu,
+  getMainMenuRows,
   getUpcomingDayRows,
   getTimeRowsForDate,
   getAvailableSlots,
 } = require("../utils/helpers");
 
+async function showMainMenu(from) {
+  const session = getSession(from);
+  session.step = "MENU";
 
+  await sendWhatsAppList(from, {
+    header: "Cuure.health 🩺",
+    body: "Welcome to Cuure.health!\n\nPlease select an option:",
+    button: "Select option",
+    rows: getMainMenuRows(),
+  });
+}
 /* =========================================
    MAIN REGISTERED USER FLOW
 ========================================= */
@@ -46,18 +57,20 @@ async function handleRegisteredUser(from, text, interactiveId) {
   });
 
 
-  /* =========================================
-     1. MAIN MENU COMMAND
-  ========================================= */
+ /* =========================================
+   1. MAIN MENU COMMAND AND DROPDOWN
+========================================= */
 
-  if (lower === "menu") {
+if (lower === "menu") {
+  await showMainMenu(from);
+  return;
+}
 
-    session.step = "MENU";
-
-    await sendWhatsAppText(from, mainMenu());
-
-    return;
-  }
+const menuChoice = {
+  menu_book: "1",
+  menu_view: "2",
+  menu_support: "3",
+}[interactiveId] || clean;
 
 
   /* =========================================
@@ -241,13 +254,13 @@ async function handleRegisteredUser(from, text, interactiveId) {
 
       session.temp = {};
 
-      await sendWhatsAppText(
-        from,
-        "Your appointment request has been cancelled.\n\n" +
-        mainMenu()
-      );
+        await sendWhatsAppText(
+          from,
+          "Your appointment request has been cancelled."
+        );
 
-      return;
+        await showMainMenu(from);
+        return;
     }
 
 
@@ -522,8 +535,7 @@ async function handleRegisteredUser(from, text, interactiveId) {
 
       await sendWhatsAppText(
         from,
-
-        "Health is true wealth! ❤️\n\n" +
+        "Health is true wealth! \n\n" +
         "✅ Appointment Confirmed\n\n" +
         `Appointment ID: ${appointmentId}\n` +
         `📅 Date: ${record.date}\n` +
@@ -535,10 +547,10 @@ async function handleRegisteredUser(from, text, interactiveId) {
             : ""
         ) +
         `👨‍⚕️ Doctor: ${doctor.name}\n` +
-        `${doctor.specialization}\n\n` +
-        mainMenu()
+        `${doctor.specialization}`
       );
 
+      await showMainMenu(from);
       return;
 
     } catch (err) {
@@ -563,7 +575,7 @@ async function handleRegisteredUser(from, text, interactiveId) {
 
   if (session.step === "MENU") {
 
-    if (clean === "1") {
+    if (menuChoice === "1") {
 
       session.step = "DAY_SELECT";
 
@@ -578,7 +590,7 @@ async function handleRegisteredUser(from, text, interactiveId) {
     }
 
 
-    if (clean === "2") {
+    if (menuChoice === "2") {
 
       try {
 
@@ -597,10 +609,10 @@ async function handleRegisteredUser(from, text, interactiveId) {
 
           await sendWhatsAppText(
             from,
-            "You do not have any appointments scheduled at the moment.\n\n" +
-            mainMenu()
+            "You do not have any appointments scheduled at the moment."
           );
 
+          await showMainMenu(from);
           return;
         }
 
@@ -617,11 +629,10 @@ async function handleRegisteredUser(from, text, interactiveId) {
 
         await sendWhatsAppText(
           from,
-          "📋 Your Appointments\n\n" +
-          list +
-          "\n" +
-          mainMenu()
+          "📋 Your Appointments\n\n" + list
         );
+
+        await showMainMenu(from);
 
       } catch (err) {
 
@@ -637,31 +648,29 @@ async function handleRegisteredUser(from, text, interactiveId) {
     }
 
 
-    if (clean === "3") {
+    if (menuChoice === "3") {
 
       await sendWhatsAppText(
         from,
-
         "Cuure.health Support 🩺\n\n" +
         "For help with appointments or other queries:\n\n" +
         "📞 Helpline: 08213156014 / 7483068353\n" +
-        "🕒 Support hours: 9:00 AM – 8:00 PM\n\n" +
-        "Type MENU to view the options again."
+        "🕒 Support hours: 9:00 AM – 8:00 PM"
       );
 
+      await showMainMenu(from);
       return;
     }
 
 
     await sendWhatsAppText(
-      from,
-      "Sorry, I did not understand that.\n\n" +
-      "Please choose one of the available options:\n\n" +
-      mainMenu()
-    );
+        from,
+        "Sorry, I did not understand that. Please select an option below."
+      );
 
-    return;
-  }
+      await showMainMenu(from);
+      return;
+        }
 
 }
 

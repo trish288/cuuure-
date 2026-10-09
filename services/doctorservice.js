@@ -45,7 +45,7 @@ async function notifyDoctor({ doctor, record }) {
           template: {
             name: "doctor_appointment_assigned",
             language: {
-              code: "en",
+              code: "en_US",
             },
             components: [
               {

@@ -1,33 +1,35 @@
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
+const ADMIN_WHATSAPP_NUMBER = process.env.ADMIN_WHATSAPP_NUMBER;
 
 const fetch = global.fetch || require("node-fetch");
 
 async function notifyDoctor({ doctor, record }) {
-  console.log("📢 Sending appointment notification to doctor...");
+  console.log("📢 Sending appointment notification to admin...");
 
   try {
     if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
-      throw new Error("Missing WHATSAPP_TOKEN or WHATSAPP_PHONE_ID");
+      throw new Error("Missing WhatsApp environment variables");
     }
 
-    const doctorPhone = String(doctor.phone || "").replace(/\D/g, "");
-
-    if (!doctorPhone) {
-      throw new Error("Doctor WhatsApp phone number is missing");
+    if (!ADMIN_WHATSAPP_NUMBER) {
+      throw new Error("ADMIN_WHATSAPP_NUMBER is missing");
     }
 
-    const parameters = [
-      doctor.name || "Doctor", // {{1}} Doctor name
-      String(record.id || ""), // {{2}} Appointment ID
-      String(record.date || ""), // {{3}} Date
-      String(record.time_label || ""), // {{4}} Time
-      String(
-        doctor.specialization ||
-        record.doctor_specialization ||
-        "General Physician"
-      ), // {{5}} Specialization
-    ];
+    const adminPhone = ADMIN_WHATSAPP_NUMBER.replace(/\D/g, "");
+
+    const message =
+      `🏥 New Appointment Booked - Cuure.health\n\n` +
+      `🆔 Appointment ID: ${record.id || "N/A"}\n` +
+      `👤 Patient: ${record.patient_name || "Not specified"}\n` +
+      `📱 Patient Phone: ${record.phone || "N/A"}\n` +
+      `📅 Date: ${record.date || "N/A"}\n` +
+      `⏰ Time: ${record.time_label || "N/A"}\n` +
+      `📍 Address: ${record.address || "Not provided"}\n` +
+      (record.location_link
+        ? `🗺️ Location: ${record.location_link}\n`
+        : "") +
+      `\n📌 Status: Booked`;
 
     const response = await fetch(
       `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_ID}/messages`,
@@ -40,22 +42,11 @@ async function notifyDoctor({ doctor, record }) {
         body: JSON.stringify({
           messaging_product: "whatsapp",
           recipient_type: "individual",
-          to: doctorPhone,
-          type: "template",
-          template: {
-            name: "doctor_appointment_assigned",
-            language: {
-              code: "en_US",
-            },
-            components: [
-              {
-                type: "body",
-                parameters: parameters.map((value) => ({
-                  type: "text",
-                  text: value,
-                })),
-              },
-            ],
+          to: adminPhone,
+          type: "text",
+          text: {
+            preview_url: false,
+            body: message,
           },
         }),
       }
@@ -64,16 +55,16 @@ async function notifyDoctor({ doctor, record }) {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("❌ WhatsApp API error:", result);
+      console.error("❌ Admin notification failed:", result);
       return;
     }
 
     console.log(
-      "✅ Doctor notification accepted by WhatsApp API:",
+      "✅ Admin notification accepted by WhatsApp API:",
       result.messages?.[0]?.id
     );
-  } catch (error) {
-    console.error("❌ Doctor notification failed:", error.message);
+  } catch (err) {
+    console.error("❌ Admin notification error:", err.message);
   }
 }
 

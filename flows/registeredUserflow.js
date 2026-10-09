@@ -16,7 +16,6 @@ const {
 } = require("../services/whatsappservice");
 
 const {
-  mainMenu,
   getMainMenuRows,
   getUpcomingDayRows,
   getTimeRowsForDate,

@@ -144,7 +144,6 @@ function getTimeRowsForDate(date) {
 }
 
 module.exports = {
-  mainMenu,
   getMainMenuRows,
   getUpcomingDayRows,
   getTimeRowsForDate,

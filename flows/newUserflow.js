@@ -3,14 +3,24 @@ const { users, getSession } = require("../utils/sessions");
 
 const {
   sendWhatsAppText,
+  sendWhatsAppList,
   sendEntryButtons,
   sendContinueChatButton,
 } = require("../services/whatsappservice");
 
-const { mainMenu } = require("../utils/helpers");
+const {
+  getMainMenuRows,
+} = require("../utils/helpers");
 
 async function handleNewUser(from, text, interactiveId) {
   const session = getSession(from);
+  console.log("REGISTRATION DEBUG:", {
+  from,
+  text,
+  interactiveId,
+  step: session.step,
+  userExists: !!users[from],
+});
 
   // EXACT SAME LOGIC — CUT & PASTE
   if (session.step === "START") {
@@ -93,12 +103,21 @@ async function handleNewUser(from, text, interactiveId) {
     }
 
     session.step = "MENU";
-    await sendWhatsAppText(
-      from,
-      `Thank you, ${session.temp.name}.\nYou have been successfully registered.\n\n` +
-        mainMenu()
-    );
-    return;
+
+      await sendWhatsAppText(
+        from,
+        `Thank you, ${session.temp.name}!\n` +
+        "You have been successfully registered. ✅"
+      );
+
+      await sendWhatsAppList(from, {
+        header: "Cuure.health 🩺",
+        body: "Welcome to Cuure.health!\n\nPlease select an option:",
+        button: "Select option",
+        rows: getMainMenuRows(),
+      });
+
+      return;
   }
 }
 

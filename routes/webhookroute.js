@@ -55,6 +55,14 @@ router.post("/", async (req, res) => {
       return res.sendStatus(200);
     }
 
+    console.log("WEBHOOK ROUTING DEBUG:", {
+      from,
+      text,
+      interactiveId,
+      step: session.step,
+      userExists: !!users[from],
+    });
+
     if (!users[from]) {
       await handleNewUser(from, text, interactiveId);
       return res.sendStatus(200);

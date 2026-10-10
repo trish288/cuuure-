@@ -20,8 +20,28 @@ router.get("/", (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!msg) return res.sendStatus(200);
+    const value = req.body?.entry?.[0]?.changes?.[0]?.value;
+
+    // Log WhatsApp delivery-status updates
+    if (value?.statuses?.length) {
+      for (const status of value.statuses) {
+        console.log("📩 WHATSAPP DELIVERY STATUS:", {
+          messageId: status.id,
+          recipient: status.recipient_id,
+          status: status.status,
+          timestamp: status.timestamp,
+          errors: status.errors || [],
+        });
+      }
+
+      return res.sendStatus(200);
+    }
+
+    const msg = value?.messages?.[0];
+
+    if (!msg) {
+      return res.sendStatus(200);
+    }
 
     const from = msg.from;
     let text = msg.text?.body || "";

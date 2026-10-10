@@ -5,7 +5,7 @@ const ADMIN_WHATSAPP_NUMBER = process.env.ADMIN_WHATSAPP_NUMBER;
 const fetch = global.fetch || require("node-fetch");
 
 async function notifyDoctor({ doctor, record }) {
-  console.log("📢 Sending appointment notification to admin...");
+  console.log("📢 Sending appointment template to admin...");
 
   try {
     if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
@@ -18,18 +18,17 @@ async function notifyDoctor({ doctor, record }) {
 
     const adminPhone = ADMIN_WHATSAPP_NUMBER.replace(/\D/g, "");
 
-    const message =
-      `🏥 New Appointment Booked - Cuure.health\n\n` +
-      `🆔 Appointment ID: ${record.id || "N/A"}\n` +
-      `👤 Patient: ${record.patient_name || "Not specified"}\n` +
-      `📱 Patient Phone: ${record.phone || "N/A"}\n` +
-      `📅 Date: ${record.date || "N/A"}\n` +
-      `⏰ Time: ${record.time_label || "N/A"}\n` +
-      `📍 Address: ${record.address || "Not provided"}\n` +
-      (record.location_link
-        ? `🗺️ Location: ${record.location_link}\n`
-        : "") +
-      `\n📌 Status: Booked`;
+    const parameters = [
+      doctor?.name || "Admin", // {{1}}
+      String(record.id || "N/A"), // {{2}}
+      String(record.date || "N/A"), // {{3}}
+      String(record.time_label || "N/A"), // {{4}}
+      String(
+        doctor?.specialization ||
+        record.doctor_specialization ||
+        "Not assigned"
+      ), // {{5}}
+    ];
 
     const response = await fetch(
       `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_ID}/messages`,
@@ -43,10 +42,21 @@ async function notifyDoctor({ doctor, record }) {
           messaging_product: "whatsapp",
           recipient_type: "individual",
           to: adminPhone,
-          type: "text",
-          text: {
-            preview_url: false,
-            body: message,
+          type: "template",
+          template: {
+            name: "doctor_appointment_assigned",
+            language: {
+              code: "en",
+            },
+            components: [
+              {
+                type: "body",
+                parameters: parameters.map((value) => ({
+                  type: "text",
+                  text: value,
+                })),
+              },
+            ],
           },
         }),
       }
@@ -55,7 +65,7 @@ async function notifyDoctor({ doctor, record }) {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Admin notification failed:", result);
+      console.error("❌ Admin template notification failed:", result);
       return;
     }
 

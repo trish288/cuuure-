@@ -47,7 +47,7 @@ async function sendEntryButtons(to) {
           body: {
             text:
               "Welcome to Homeclinic24 🩺\n\n" +
-              "🌐 Website: https://Homeclinic24\n\n" +
+              "🌐 Website: https://www.homeclinic24.com/\n\n" +
               "Book verified doctors, healthcare services and manage appointments from the comfort of your home.\n\n" +
               "How would you like to proceed?",
           },

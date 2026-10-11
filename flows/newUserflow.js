@@ -33,7 +33,7 @@ async function handleNewUser(from, text, interactiveId) {
     if (interactiveId === "CALL_NOW") {
       await sendWhatsAppText(
         from,
-        "📞 Call Cuure.health\n\n 0821-3156014\n 7483068353\n🕘 9 AM – 8 PM"
+        "📞 Call Homeclinic24\n\n 0821-3156014\n 7483068353\n🕘 9 AM – 8 PM"
       );
       await sendContinueChatButton(from);
       session.step = "AFTER_CALL";
@@ -111,8 +111,8 @@ async function handleNewUser(from, text, interactiveId) {
       );
 
       await sendWhatsAppList(from, {
-        header: "Cuure.health 🩺",
-        body: "Welcome to Cuure.health!\n\nPlease select an option:",
+        header: "Homeclinic24 🩺",
+        body: "Welcome to Homeclinic24!\n\nPlease select an option:",
         button: "Select option",
         rows: getMainMenuRows(),
       });

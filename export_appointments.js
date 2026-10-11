@@ -5,7 +5,7 @@ await sendPromo(patientPhone, patientName);
 const sqlite3 = require("sqlite3").verbose();
 const XLSX = require("xlsx");
 
-const db = new sqlite3.Database("./cuure.db");
+const db = new sqlite3.Database("./Homeclinic24.db");
 
 db.all(
   `SELECT

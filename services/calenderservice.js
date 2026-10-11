@@ -25,7 +25,7 @@ async function createCalendarEvent({ date, timeValue, from, name }) {
   await calendar.events.insert({
     calendarId: process.env.GOOGLE_CALENDAR_ID,
     requestBody: {
-      summary: "Cuure.health – Doctor Appointment",
+      summary: "Homeclinic24 – Doctor Appointment",
       description: `Patient WhatsApp: ${from}\nName: ${name || "N/A"}`,
       start: { dateTime: start, timeZone: "Asia/Kolkata" },
       end: { dateTime: end, timeZone: "Asia/Kolkata" },

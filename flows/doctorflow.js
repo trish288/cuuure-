@@ -143,7 +143,7 @@ async function handleDoctorFlow(from, text, interactiveId) {
         `UPI ID: ${paymentInfo.upiId} (${paymentInfo.payeeName})\n` +
         `Payment Link: ${paymentLink}\n\n` +
         `(Tap the link to open your UPI app and pay)\n\n` +
-        `Thank you for choosing Cuure.health! - where care meets convenience`
+        `Thank you for choosing Homeclinic24! - where care meets convenience`
       );
 
       session.step = "MENU";

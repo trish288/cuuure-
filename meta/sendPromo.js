@@ -16,7 +16,7 @@ async function sendPromo(phone, name) {
           type: "body",
           parameters: [
             { type: "text", text: name },                              // {{1}}
-            { type: "text", text: "Cuure.health" },                    // {{2}}
+            { type: "text", text: "Homeclinic24" },                    // {{2}}
             { type: "text", text: "A quick consultation today can help you stay on track." }, // {{3}}
             { type: "text", text: "https://wa.me/917483068353" }        // {{4}}
           ]

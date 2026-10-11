@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "cuure-secret",
+    secret: process.env.SESSION_SECRET || "Homeclinic24-secret",
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 15 * 60 * 1000 }
@@ -29,7 +29,7 @@ app.use("/admin", adminRoute);
 app.use("/api/admin", adminApiRoute);
 
 app.get("/", (req, res) => {
-  res.send("Cuure Healthcare Bot is live ✅");
+  res.send("Homeclinic24 Healthcare Bot is live ✅");
 });
 
 module.exports = app;

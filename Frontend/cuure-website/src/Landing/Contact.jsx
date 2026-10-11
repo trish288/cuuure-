@@ -61,7 +61,7 @@ export default function Contact() {
     try {
 
       const res = await axios.get(
-        "https://cuure-bott-production-d393.up.railway.app/api/booked-slots",
+        "https://Homeclinic24-bott-production-d393.up.railway.app/api/booked-slots",
         {
           params: {
             doctor_name: doctor,
@@ -111,7 +111,7 @@ export default function Contact() {
     setLoading(true);
 
     try {
-      await axios.post("https://cuure-bott-production-d393.up.railway.app/api/book-appointment", {
+      await axios.post("https://Homeclinic24-bott-production-d393.up.railway.app/api/book-appointment", {
         patient_name: form.patient_name,
         age: form.age,
         phone: form.phone,

@@ -27,8 +27,8 @@ async function showMainMenu(from) {
   session.step = "MENU";
 
   await sendWhatsAppList(from, {
-    header: "Cuure.health 🩺",
-    body: "Welcome to Cuure.health!\n\nPlease select an option:",
+    header: "Homeclinic24 🩺",
+    body: "Welcome to Homeclinic24!\n\nPlease select an option:",
     button: "Select option",
     rows: getMainMenuRows(),
   });
@@ -651,7 +651,7 @@ const menuChoice = {
 
       await sendWhatsAppText(
         from,
-        "Cuure.health Support 🩺\n\n" +
+        "Homeclinic24 Support 🩺\n\n" +
         "For help with appointments or other queries:\n\n" +
         "📞 Helpline: 08213156014 / 7483068353\n" +
         "🕒 Support hours: 9:00 AM – 8:00 PM"

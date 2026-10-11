@@ -46,8 +46,8 @@ async function sendEntryButtons(to) {
           type: "button",
           body: {
             text:
-              "Welcome to Cuure.health 🩺\n\n" +
-              "🌐 Website: https://cuure.health\n\n" +
+              "Welcome to Homeclinic24 🩺\n\n" +
+              "🌐 Website: https://Homeclinic24\n\n" +
               "Book verified doctors, healthcare services and manage appointments from the comfort of your home.\n\n" +
               "How would you like to proceed?",
           },
@@ -119,7 +119,7 @@ async function sendWhatsAppList(to, { header, body, button, rows }) {
           type: "list",
           header: { type: "text", text: header },
           body: { text: body },
-          footer: { text: "Cuure.health" },
+          footer: { text: "Homeclinic24" },
           action: {
             button,
             sections: [

@@ -24,7 +24,7 @@ function getMainMenuRows() {
     {
       id: "menu_support",
       title: "Contact Support",
-      description: "Get help from Cuure.health",
+      description: "Get help from Homeclinic24",
     },
   ];
 }

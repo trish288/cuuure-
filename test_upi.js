@@ -2,11 +2,11 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 function buildUpi(amount = 100, appointmentId = 123) {
-  let upiId = (process.env.UPI_ID || 'cuure@upi').trim();
+  let upiId = (process.env.UPI_ID || 'Homeclinic24@upi').trim();
   if (upiId.toUpperCase().startsWith('UPI_ID=')) upiId = upiId.substring(7);
   upiId = upiId.replace(/^\"(.*)\"$/, '$1').replace(/^'(.*)'$/, '$1').trim();
 
-  let payeeName = (process.env.UPI_NAME || 'Cuure Health').trim();
+  let payeeName = (process.env.UPI_NAME || 'Homeclinic24 Health').trim();
   payeeName = payeeName.replace(/^\"(.*)\"$/, '$1').replace(/^'(.*)'$/, '$1').trim();
 
   const amountStr = Number(amount || 0).toFixed(2);

@@ -19,7 +19,7 @@ async function notifyDoctor({ doctor, record }) {
     const adminPhone = ADMIN_WHATSAPP_NUMBER.replace(/\D/g, "");
 
     const message =
-      `🏥 New Appointment Booked - Cuure.health\n\n` +
+      `🏥 New Appointment Booked - Homeclinic24\n\n` +
       `🆔 Appointment ID: ${record.id || "N/A"}\n` +
       `👤 Patient: ${record.patient_name || "Not specified"}\n` +
       `📱 Patient Phone: ${record.phone || "N/A"}\n` +

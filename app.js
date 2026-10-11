@@ -10,7 +10,7 @@ async function startServer() {
     await initDB();
 
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`✅ Cuure Meta bot running on port ${PORT}`);
+      console.log(`✅ Homeclinic24 Meta bot running on port ${PORT}`);
     });
   } catch (error) {
     console.error("❌ Database initialization failed:", error);

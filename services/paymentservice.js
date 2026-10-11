@@ -1,8 +1,8 @@
 const { UPI_ID, UPI_NAME } = require("../config/env");
 
 function generatePaymentLink(patientPhone, amount, appointmentId) {
-  let upiId = (UPI_ID || "cuure@upi").replace(/^UPI_ID=/, "").replace(/['"]/g, "").trim();
-  let payeeName = (UPI_NAME || "Cuure Health").replace(/['"]/g, "").trim();
+  let upiId = (UPI_ID || "Homeclinic24@upi").replace(/^UPI_ID=/, "").replace(/['"]/g, "").trim();
+  let payeeName = (UPI_NAME || "Homeclinic24 Health").replace(/['"]/g, "").trim();
 
   const amountStr = Number(amount).toFixed(2);
 

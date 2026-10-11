@@ -305,7 +305,7 @@ const menuChoice = {
     if (interactiveId === "ADDR_LOCATION") {
 
       session.step = "ASK_LOCATION";
-
+      session.temp.addressMode = "LOCATION";
       session.temp.address = null;
       session.temp.location = null;
       session.temp.location_link = null;
@@ -351,47 +351,42 @@ const menuChoice = {
      7. RECEIVE LOCATION OR ADDRESS FALLBACK
   ========================================= */
 
-  else if (session.step === "ASK_LOCATION") {
+else if (session.step === "ASK_LOCATION") {
 
-    if (session.temp.location) {
+  if (session.temp.location) {
 
-      const { lat, lng, address } = session.temp.location;
+    // User shared their current WhatsApp location.
+    const { lat, lng, address } = session.temp.location;
 
-      session.temp.address =
-        address || "Shared via WhatsApp location";
+    session.temp.address =
+      address || "Shared via WhatsApp location";
 
-      session.temp.location_link =
-        `https://maps.google.com/?q=${lat},${lng}`;
+    session.temp.location_link =
+      `https://maps.google.com/?q=${lat},${lng}`;
 
-    } else if (
-      trimmedText &&
-      lower !== "skip"
-    ) {
+  } else if (trimmedText && lower !== "skip") {
 
-      // Allow the patient to type an address instead.
-      session.temp.address = trimmedText;
+    // User typed their address instead.
+    session.temp.address = trimmedText;
+    session.temp.location_link = null;
 
-      session.temp.location_link = null;
+  } else if (lower === "skip") {
 
-    } else if (lower === "skip") {
+    session.temp.address = "Address not provided";
+    session.temp.location_link = null;
 
-      session.temp.address = "Address not provided";
+  } else {
 
-      session.temp.location_link = null;
+    await sendWhatsAppText(
+      from,
+      "Please share your current location, type your complete address, or reply SKIP."
+    );
 
-    } else {
-
-      await sendWhatsAppText(
-        from,
-        "Please share your WhatsApp location, type your address, or reply SKIP."
-      );
-
-      return;
-    }
-
-    session.step = "FINAL_CONFIRM";
+    return;
   }
 
+  session.step = "FINAL_CONFIRM";
+}
 
   /* =========================================
      8. SAVE APPOINTMENT

@@ -1,47 +1,86 @@
 const fetch = require("node-fetch");
-const { META_TOKEN, PHONE_NUMBER_ID, META_API_VERSION } = require("./config");
 
-async function sendPromo(phone, name) {
-  const url = `https://graph.facebook.com/${META_API_VERSION}/${PHONE_NUMBER_ID}/messages`;
+const {
+  META_TOKEN,
+  PHONE_NUMBER_ID,
+  META_API_VERSION,
+} = require("./config");
+
+async function sendPromo(phone, name, promoText) {
+  const url =
+    `https://graph.facebook.com/${META_API_VERSION}/` +
+    `${PHONE_NUMBER_ID}/messages`;
 
   const payload = {
     messaging_product: "whatsapp",
     to: phone,
     type: "template",
     template: {
-      name: "doctor_at_doorstep_reminder_v2",
-      language: { code: "en" }, // or "en_US" — must match ACTIVE template
+      name: "homeclinic24_promotion",
+      language: {
+        code: "en",
+      },
       components: [
         {
           type: "body",
           parameters: [
-            { type: "text", text: name },                              // {{1}}
-            { type: "text", text: "Homeclinic24" },                    // {{2}}
-            { type: "text", text: "A quick consultation today can help you stay on track." }, // {{3}}
-            { type: "text", text: "https://wa.me/917483068353" }        // {{4}}
-          ]
+            {
+              type: "text",
+              text: name || "there",
+            },
+            {
+              type: "text",
+              text: promoText,
+            },
+            {
+              type: "text",
+              text: "https://wa.me/917483068353",
+            },
+          ],
         },
-      ]
-    }
-  };
-  
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${META_TOKEN}`,
-      "Content-Type": "application/json"
+      ],
     },
-    body: JSON.stringify(payload)
-  });
+  };
 
-  const data = await res.json();
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${META_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) {
-    console.error("❌ Meta API error:", JSON.stringify(data, null, 2));
-    return;
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(
+        "WhatsApp promotion failed:",
+        JSON.stringify(data)
+      );
+
+      return {
+        success: false,
+        error: data.error?.message || "WhatsApp message failed",
+      };
+    }
+
+    return {
+      success: true,
+      messageId: data.messages?.[0]?.id || null,
+    };
+  } catch (error) {
+    console.error(
+      "WhatsApp promotion error:",
+      error.message
+    );
+
+    return {
+      success: false,
+      error: error.message || "Network error",
+    };
   }
-
-  console.log("✅ Sent to", phone, "Message ID:", data.messages[0].id);
 }
 
 module.exports = { sendPromo };

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { pool, appointmentsCache } = require("../config/db");
-
+const { sendPromo } = require("../meta/sendPromo");
 /* A slot is in the past if its date is before today, or it is today and the
    slot's start hour is not after the current hour (same rule the bot uses). */
 function isPastSlot(date, time_value) {
@@ -431,6 +431,118 @@ router.post("/payments", async (req, res) => {
       message: "Failed to create payment request",
     });
   }
+});
+
+/* ===============================
+   SEND WHATSAPP PROMOTION
+================================ */
+router.post("/promotions/send", async (req, res) => {
+  const { phones, message, confirmOptIn } = req.body || {};
+
+  if (!confirmOptIn) {
+    return res.status(400).json({
+      success: false,
+      message: "Confirm that the selected recipients opted in to promotions.",
+    });
+  }
+
+  if (!Array.isArray(phones) || phones.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Select at least one recipient.",
+    });
+  }
+
+  if (phones.length > 100) {
+    return res.status(400).json({
+      success: false,
+      message: "Select at most 100 recipients per request.",
+    });
+  }
+
+  if (
+    typeof message !== "string" ||
+    !message.trim() ||
+    message.trim().length > 1000
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter a promotion between 1 and 1000 characters.",
+    });
+  }
+
+  const normalizedPhones = phones.map((phone) =>
+    String(phone).replace(/\D/g, "").replace(/^91/, "")
+  );
+
+  if (normalizedPhones.some((phone) => !/^\d{10}$/.test(phone))) {
+    return res.status(400).json({
+      success: false,
+      message: "One or more phone numbers are invalid.",
+    });
+  }
+
+  const uniquePhones = [...new Set(normalizedPhones)];
+
+  const results = [];
+
+  for (const phone of uniquePhones) {
+    try {
+      // Resolve the patient's name from existing appointments.
+      const patient = await pool.query(
+        `SELECT patient_name
+         FROM appointments
+         WHERE regexp_replace(phone, '\\D', '', 'g') IN ($1, $2)
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [phone, `91${phone}`]
+      );
+
+      if (!patient.rows.length) {
+        results.push({
+          phone,
+          success: false,
+          error: "Patient not found",
+        });
+        continue;
+      }
+
+      const result = await sendPromo(
+        `91${phone}`,
+        patient.rows[0].patient_name,
+        message.trim()
+      );
+
+      results.push({
+        phone,
+        success: result.success,
+        messageId: result.messageId || null,
+        error: result.error || null,
+      });
+
+      // Small delay between messages.
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    } catch (error) {
+      console.error("Campaign recipient error:", error);
+
+      results.push({
+        phone,
+        success: false,
+        error: "Failed to process recipient",
+      });
+    }
+  }
+
+  const sent = results.filter((result) => result.success).length;
+  const failed = results.length - sent;
+
+  return res.json({
+    success: failed === 0,
+    total: results.length,
+    sent,
+    failed,
+    results,
+  });
 });
 
 module.exports = router;

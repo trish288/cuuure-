@@ -3,6 +3,20 @@ const router = express.Router();
 
 const { pool, appointmentsCache } = require("../config/db");
 
+/* A slot is in the past if its date is before today, or it is today and the
+   slot's start hour is not after the current hour (same rule the bot uses). */
+function isPastSlot(date, time_value) {
+  const now = new Date();
+  const todayStr =
+    `${now.getFullYear()}-` +
+    `${String(now.getMonth() + 1).padStart(2, "0")}-` +
+    `${String(now.getDate()).padStart(2, "0")}`;
+
+  if (date < todayStr) return true;
+  if (date > todayStr) return false;
+  return parseInt(time_value, 10) <= now.getHours();
+}
+
 /* ===============================
    GET ALL APPOINTMENTS (ADMIN)
 ================================ */
@@ -98,6 +112,13 @@ router.post("/appointments", async (req, res) => {
     });
   }
 
+  if (isPastSlot(date, time_value)) {
+    return res.status(400).json({
+      success: false,
+      message: "Cannot book a date or time that has already passed",
+    });
+  }
+
   try {
     /* ===============================
        SAVE / UPDATE USER (AGE FIX ✅)
@@ -168,6 +189,158 @@ router.post("/appointments", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to add appointment",
+    });
+  }
+});
+
+/* ===============================
+   EDIT APPOINTMENT (ADMIN)
+================================ */
+router.put("/appointments/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ success: false, message: "Invalid appointment id" });
+  }
+
+  let {
+    phone,
+    patient_name,
+    age,
+    date,
+    time_label,
+    time_value,
+    address,
+    doctor_name,
+    doctor_specialization,
+  } = req.body || {};
+
+  phone = (phone || "").toString().trim().replace(/\D/g, "").replace(/^91/, "");
+
+  if (!/^\d{10}$/.test(phone)) {
+    return res.status(400).json({
+      success: false,
+      message: "Phone number must be exactly 10 digits",
+    });
+  }
+
+  if (!patient_name || !/^[a-zA-Z\s]+$/.test(patient_name)) {
+    return res.status(400).json({
+      success: false,
+      message: "Patient name must contain only letters and spaces",
+    });
+  }
+
+  if (age !== undefined && age !== null && age !== "") {
+    age = Number(age);
+    if (Number.isNaN(age) || age < 1 || age > 110) {
+      return res.status(400).json({
+        success: false,
+        message: "Age must be between 1 and 110",
+      });
+    }
+  } else {
+    age = null;
+  }
+
+  if (!date || !time_value || !doctor_name) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing required appointment fields",
+    });
+  }
+
+  try {
+    const existing = await pool.query(
+      `SELECT phone, date, time_value FROM appointments WHERE id = $1`,
+      [id]
+    );
+    if (!existing.rows.length) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+    const old = existing.rows[0];
+
+    // block moving onto a slot another appointment already holds; skip when the
+    // slot is unchanged so details of an existing (even double-booked) one stay editable
+    if (date !== old.date || time_value !== old.time_value) {
+      if (isPastSlot(date, time_value)) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot move an appointment to a date or time that has already passed",
+        });
+      }
+
+      const clash = await pool.query(
+        `SELECT 1 FROM appointments WHERE date = $1 AND time_value = $2 AND id <> $3 LIMIT 1`,
+        [date, time_value, id]
+      );
+      if (clash.rows.length) {
+        return res.status(409).json({
+          success: false,
+          message: "That date and time slot is already booked",
+        });
+      }
+    }
+
+    if (age !== null) {
+      await pool.query(
+        `
+        INSERT INTO users (phone, name, age)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (phone)
+        DO UPDATE SET name = EXCLUDED.name, age = EXCLUDED.age
+        `,
+        [phone, patient_name, age]
+      );
+    }
+
+    await pool.query(
+      `
+      UPDATE appointments SET
+        phone = $1,
+        patient_name = $2,
+        date = $3,
+        time_label = $4,
+        time_value = $5,
+        address = $6,
+        doctor_name = $7,
+        doctor_specialization = $8
+      WHERE id = $9
+      `,
+      [
+        phone,
+        patient_name,
+        date,
+        time_label || time_value,
+        time_value,
+        address || null,
+        doctor_name,
+        doctor_specialization || null,
+        id,
+      ]
+    );
+
+    // keep slot-availability caches in sync (old slot freed, new slot taken)
+    const updated = {
+      phone,
+      patient_name,
+      date,
+      time_label: time_label || time_value,
+      time_value,
+    };
+    for (const cache of [appointmentsCache, require("../db/initDB").appointmentsCache]) {
+      const idx = cache.findIndex(
+        (a) => a.phone === old.phone && a.date === old.date && a.time_value === old.time_value
+      );
+      if (idx >= 0) cache[idx] = updated;
+      else cache.push(updated);
+    }
+
+    return res.json({ success: true, id });
+  } catch (err) {
+    console.error("Admin appointment update error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update appointment",
     });
   }
 });

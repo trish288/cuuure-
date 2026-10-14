@@ -32,7 +32,7 @@ router.post("/login", (req, res) => {
     return res.redirect("/admin");
   }
 
-  return res.status(401).send("Invalid username or password");
+  return res.redirect("/admin-login.html?error=1");
 });
 
 /* ===============================

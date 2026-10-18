@@ -3,9 +3,6 @@ const path = require("path");
 
 const router = express.Router();
 
-/* ===============================
-   ADMIN USERS (STATIC)
-================================ */
 const ADMINS = [
   { username: "Benaka", password: "Benaka@123" },
   { username: "Trisha", password: "Trisha@123" },
@@ -14,51 +11,44 @@ const ADMINS = [
   { username: "Shreyas", password: "Shreyas@123" },
 ];
 
-/* ===============================
-   ADMIN LOGIN
-================================ */
+// Admin login
 router.post("/login", (req, res) => {
-  console.log("ADMIN LOGIN BODY =", req.body);
-
   const { username, password } = req.body || {};
 
   const isValid = ADMINS.some(
-    a => a.username === username && a.password === password
+    (admin) =>
+      admin.username === username &&
+      admin.password === password
   );
 
-  if (isValid) {
-    req.session.isAdmin = true;
-    req.session.adminUser = username;
-    return res.redirect("/admin");
+  if (!isValid) {
+    return res.redirect("/admin-login.html?error=1");
   }
 
-  return res.redirect("/admin-login.html?error=1");
+  req.session.isAdmin = true;
+  req.session.adminUser = username;
+
+  req.session.save((err) => {
+    if (err) {
+      console.error("Admin session save failed:", err);
+      return res.status(500).send("Unable to establish admin session.");
+    }
+
+    return res.redirect("/admin/");
+  });
 });
 
-/* ===============================
-   ADMIN AUTH MIDDLEWARE
-================================ */
-function requireAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin) {
+// Protect the dashboard
+function requireDashboardAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin === true) {
     return next();
   }
+
   return res.redirect("/admin-login.html");
 }
 
-/* ===============================
-   SESSION REFRESH
-================================ */
-router.use((req, res, next) => {
-  if (req.session) {
-    req.session.touch(); // keep session alive
-  }
-  next();
-});
-
-/* ===============================
-   ADMIN DASHBOARD
-================================ */
-router.get("/", requireAdmin, (req, res) => {
+// Dashboard
+router.get("/", requireDashboardAdmin, (req, res) => {
   res.sendFile(
     path.join(__dirname, "..", "public", "admin.html")
   );

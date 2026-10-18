@@ -1,157 +1,68 @@
 import { useState } from "react";
 import axios from "axios";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://cuuure-production.up.railway.app";
+
 export default function Contact() {
-
-  const [form, setForm] = useState({
-    patient_name: "",
-    dob: "",
-    age: "",
-    phone: "",
-    date: "",
-    time_value: "",
-    doctor_name: "",
-    address: ""
-  });
-
+  const [form, setForm] = useState({ patient_name: "", phone: "" });
   const [loading, setLoading] = useState(false);
-  const [bookedSlots, setBookedSlots] = useState([]);
-
-  const doctors = [
-    "Dr. Sharma",
-    "Dr. Kumar",
-    "Dr. Priya",
-    "Dr. Ramesh"
-  ];
-
-  const timeSlots = [
-    "09:00 AM",
-    "09:30 AM",
-    "10:00 AM",
-    "10:30 AM",
-    "11:00 AM",
-    "11:30 AM",
-    "12:00 PM",
-    "02:00 PM",
-    "02:30 PM",
-    "03:00 PM",
-    "03:30 PM"
-  ];
-
-  // Calculate Age
-  const calculateAge = (dob) => {
-    const birthDate = new Date(dob);
-    const today = new Date();
-
-    let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
-
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-
-    return `${years}Y ${months}M`;
-  };
-
-  const fetchBookedSlots = async (doctor, date) => {
-
-    if (!doctor || !date) return;
-
-    try {
-
-      const res = await axios.get(
-        "https://Homeclinic24-bott-production-d393.up.railway.app/api/booked-slots",
-        {
-          params: {
-            doctor_name: doctor,
-            date: date
-          }
-        }
-      );
-
-      if (res.data.success) {
-        setBookedSlots(res.data.data);
-      }
-
-    } catch (err) {
-      console.error("Failed to fetch slots");
-    }
-
-  };
+  const [message, setMessage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === "dob") {
-      const age = calculateAge(value);
-      setForm({ ...form, dob: value, age });
-    } 
-    else {
-      const newForm = { ...form, [name]: value };
-      setForm(newForm);
-
-      if (name === "doctor_name" || name === "date") {
-        fetchBookedSlots(
-          name === "doctor_name" ? value : newForm.doctor_name,
-          name === "date" ? value : newForm.date
-        );
-      }
-    }
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage(null);
 
-    if (!/^\d{10}$/.test(form.phone)) {
-      alert("Phone must be 10 digits");
+    const patient_name = form.patient_name.trim();
+    const phone = form.phone.replace(/\D/g, "").replace(/^91/, "");
+
+    if (!/^[a-zA-Z\s]+$/.test(patient_name)) {
+      setMessage({ type: "error", text: "Name must contain only letters and spaces." });
+      return;
+    }
+
+    if (!/^\d{10}$/.test(phone)) {
+      setMessage({ type: "error", text: "Phone number must be 10 digits." });
       return;
     }
 
     setLoading(true);
 
     try {
-      await axios.post("https://Homeclinic24-bott-production-d393.up.railway.app/api/book-appointment", {
-        patient_name: form.patient_name,
-        age: form.age,
-        phone: form.phone,
-        date: form.date,
-        time_value: form.time_value,
-        doctor_name: form.doctor_name,
-        address: form.address
+      await axios.post(`${API_URL}/api/website-booking`, { patient_name, phone });
+
+      setMessage({
+        type: "success",
+        text: "Thank you! Your appointment request is received. We will contact you shortly.",
       });
-
-      alert("Appointment booked successfully!");
-
-      setForm({
-        patient_name: "",
-        dob: "",
-        age: "",
-        phone: "",
-        date: "",
-        time_value: "",
-        doctor_name: "",
-        address: ""
-      });
-
+      setForm({ patient_name: "", phone: "" });
     } catch (err) {
-      alert("Failed to submit form");
-      console.error(err);
+      setMessage({
+        type: "error",
+        text:
+          err.response?.data?.message ||
+          "Could not submit your request. Please try again.",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const fieldStyle = {
     display: "flex",
     flexDirection: "column",
-    gap: "5px"
+    gap: "5px",
   };
 
   const inputStyle = {
     padding: "8px",
     borderRadius: "6px",
-    border: "1px solid #ccc"
+    border: "1px solid #ccc",
   };
 
   return (
@@ -164,111 +75,33 @@ export default function Contact() {
           display: "flex",
           flexDirection: "column",
           gap: "15px",
-          maxWidth: "400px"
+          maxWidth: "400px",
         }}
       >
-
         <div style={fieldStyle}>
-          <label>Patient Name</label>
+          <label htmlFor="patient_name">Name</label>
           <input
+            id="patient_name"
             style={inputStyle}
             name="patient_name"
             value={form.patient_name}
             onChange={handleChange}
+            maxLength={60}
             required
           />
         </div>
 
         <div style={fieldStyle}>
-          <label>Date of Birth</label>
+          <label htmlFor="phone">Mobile Number</label>
           <input
+            id="phone"
             style={inputStyle}
-            type="date"
-            name="dob"
-            value={form.dob}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div style={fieldStyle}>
-          <label>Age</label>
-          <input
-            style={inputStyle}
-            name="age"
-            value={form.age}
-            readOnly
-          />
-        </div>
-
-        <div style={fieldStyle}>
-          <label>Phone Number</label>
-          <input
-            style={inputStyle}
+            type="tel"
+            inputMode="numeric"
             name="phone"
             value={form.phone}
             onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div style={fieldStyle}>
-          <label>Appointment Date</label>
-          <input
-            style={inputStyle}
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div style={fieldStyle}>
-          <label>Select Doctor</label>
-          <select
-            style={inputStyle}
-            name="doctor_name"
-            value={form.doctor_name}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Doctor</option>
-            {doctors.map((doc, index) => (
-              <option key={index} value={doc}>
-                {doc}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={fieldStyle}>
-          <label>Select Time Slot</label>
-          <select
-            style={inputStyle}
-            name="time_value"
-            value={form.time_value}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Time</option>
-            {timeSlots
-            .filter(slot => !bookedSlots.includes(slot))
-            .map((slot, index) => (
-              <option key={index} value={slot}>
-                {slot}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={fieldStyle}>
-          <label>Address</label>
-          <textarea
-            style={inputStyle}
-            name="address"
-            value={form.address}
-            onChange={handleChange}
+            maxLength={14}
             required
           />
         </div>
@@ -282,12 +115,17 @@ export default function Contact() {
             border: "none",
             background: "#007BFF",
             color: "white",
-            cursor: "pointer"
+            cursor: "pointer",
           }}
         >
-          {loading ? "Booking..." : "Submit"}
+          {loading ? "Submitting..." : "Book Appointment"}
         </button>
 
+        {message && (
+          <p style={{ color: message.type === "success" ? "green" : "crimson", margin: 0 }}>
+            {message.text}
+          </p>
+        )}
       </form>
     </section>
   );

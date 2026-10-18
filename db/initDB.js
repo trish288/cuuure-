@@ -47,9 +47,22 @@ async function initDB() {
       location_link TEXT,
       doctor_name TEXT,
       doctor_specialization TEXT,
+      source TEXT DEFAULT 'whatsapp',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // where the booking came from: 'whatsapp' (bot), 'website' or 'admin'
+  await pool.query(
+    `ALTER TABLE appointments ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'whatsapp'`
+  );
+
+  // website bookings made before this column existed were tagged by their address
+  await pool.query(
+    `UPDATE appointments
+     SET source = 'website', address = NULL
+     WHERE address = 'Booked from website' AND source IS DISTINCT FROM 'website'`
+  );
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS payment_requests (

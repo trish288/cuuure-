@@ -35,6 +35,7 @@ router.get("/appointments", async (req, res) => {
         a.location_link,
         a.doctor_name,
         a.doctor_specialization,
+        COALESCE(a.source, 'whatsapp') AS source,
         'Booked' AS status
       FROM appointments a
       LEFT JOIN users u ON u.phone = a.phone
@@ -151,9 +152,10 @@ router.post("/appointments", async (req, res) => {
         address,
         location_link,
         doctor_name,
-        doctor_specialization
+        doctor_specialization,
+        source
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'admin')
       RETURNING id
       `,
       [

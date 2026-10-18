@@ -110,16 +110,16 @@ router.post("/", rateLimit, async (req, res) => {
         address,
         location_link,
         doctor_name,
-        doctor_specialization
+        doctor_specialization,
+        source
       )
-      VALUES ($1, $2, $3, $4, NULL, $5, NULL, $6, $7)
+      VALUES ($1, $2, $3, $4, NULL, NULL, NULL, $5, $6, 'website')
       RETURNING id`,
       [
         botPhone,
         patient_name,
         PENDING_LABEL,
         PENDING_LABEL,
-        "Booked from website",
         doctor ? doctor.name : null,
         doctor ? doctor.specialization : null,
       ]

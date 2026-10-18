@@ -328,12 +328,13 @@
                     <th>Time</th>
                     <th>Doctor</th>
                     <th>Address</th>
+                    <th>Source</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="appt-tbody">
-                  <tr><td colspan="10" class="loading">Loading...</td></tr>
+                  <tr><td colspan="11" class="loading">Loading...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -680,6 +681,13 @@
       function fmtDate(s) {
         const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || '');
         return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : (s || '-');
+      }
+
+      const SOURCE_LABEL = { whatsapp: 'WhatsApp', website: 'Website', admin: 'Admin' };
+      const TBC_TEXT = 'To be confirmed';
+      const TBC = `<span class="cell-sub">${TBC_TEXT}</span>`;
+      function isPendingWebsite(a) {
+        return a.source === 'website' && a.date === TBC_TEXT;
       }
 
       function fmtPhone(p) {
@@ -1126,22 +1134,27 @@ async function sendPromotion() {
           });
 
           const tbody = document.getElementById('appt-tbody');
-          tbody.innerHTML = filtered.length ? filtered.map(a => `
+          tbody.innerHTML = filtered.length ? filtered.map(a => {
+            // a website request only has name + phone; everything else stays
+            // "To be confirmed" until the clinic sets a date (via Edit)
+            const tbc = isPendingWebsite(a);
+            return `
             <tr>
               <td class="id">#${esc(a.id)}</td>
               <td><div class="person">${avatar(a.patient_name)}<span class="person-name">${esc(a.patient_name || '—')}</span></div></td>
-              <td class="num">${esc(a.age || '-')}</td>
+              <td class="num">${tbc ? TBC : esc(a.age || '-')}</td>
               <td class="nowrap num">${esc(fmtPhone(a.phone))}</td>
               <td class="nowrap">${esc(fmtDate(a.date))}</td>
               <td class="nowrap">${esc(a.time_label || '-')}</td>
-              <td class="nowrap"><span class="cell-main">${esc(a.doctor_name || '-')}</span>${a.doctor_specialization ? `<div class="cell-sub">${esc(a.doctor_specialization)}</div>` : ''}</td>
-              <td class="addr">${esc(a.address || '—')}</td>
+              <td class="nowrap">${tbc ? TBC : `<span class="cell-main">${esc(a.doctor_name || '-')}</span>${a.doctor_specialization ? `<div class="cell-sub">${esc(a.doctor_specialization)}</div>` : ''}`}</td>
+              <td class="addr">${tbc ? TBC : esc(a.address || '—')}</td>
+              <td class="nowrap">${esc(SOURCE_LABEL[a.source] || SOURCE_LABEL.whatsapp)}</td>
               <td><span class="badge booked">Booked</span></td>
               <td class="actions">
                 <button class="btn-sm btn-secondary" onclick="openEditModal(${Number(a.id)})">${ICON_EDIT} Edit</button>
               </td>
             </tr>
-          `).join('') : '<tr><td colspan="10" class="empty">No appointments found</td></tr>';
+          `; }).join('') : '<tr><td colspan="11" class="empty">No appointments found</td></tr>';
 
           document.getElementById('appt-count').innerHTML = `Showing <b>${filtered.length}</b> of <b>${appointmentsData.length}</b> appointments`
             + (apptFilter !== 'all'
@@ -1155,7 +1168,7 @@ async function sendPromotion() {
           setText('stat-appt-upcoming', appointmentsData.filter(a => a.date > today).length);
           setText('stat-appt-patients', new Set(appointmentsData.map(a => String(a.phone || '').replace(/\D/g, '').slice(-10)).filter(Boolean)).size);
         } catch (e) {
-          document.getElementById('appt-tbody').innerHTML = `<tr><td colspan="10" class="error">${esc(e.message)}</td></tr>`;
+          document.getElementById('appt-tbody').innerHTML = `<tr><td colspan="11" class="error">${esc(e.message)}</td></tr>`;
         }
       }
 
@@ -1215,8 +1228,11 @@ async function sendPromotion() {
       function exportAppointments() {
         if (!appointmentsData.length) return notify('No data to export', 'error');
         const csv = [
-          ['ID', 'Patient', 'Phone', 'Date', 'Time', 'Doctor', 'Address'].join(','),
-          ...appointmentsData.map(a => [a.id, a.patient_name, a.phone, a.date, a.time_label, a.doctor_name, a.address].map(v => `"${v || ''}"`).join(','))
+          ['ID', 'Patient', 'Phone', 'Date', 'Time', 'Doctor', 'Address', 'Source'].join(','),
+          ...appointmentsData.map(a => {
+            const tbc = isPendingWebsite(a);
+            return [a.id, a.patient_name, a.phone, a.date, a.time_label, tbc ? TBC_TEXT : a.doctor_name, tbc ? TBC_TEXT : a.address, SOURCE_LABEL[a.source] || SOURCE_LABEL.whatsapp].map(v => `"${v || ''}"`).join(',');
+          })
         ].join('\n');
         const a = document.createElement('a');
         a.href = 'data:text/csv,' + encodeURIComponent(csv);

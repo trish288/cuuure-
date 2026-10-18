@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const session = require("express-session");
-
+const requireAdmin = require("./middleware/requireadmin");
 const webhookRoute = require("./routes/webhookroute");
 const adminRoute = require("./routes/adminroute");
 const adminApiRoute = require("./routes/adminApiroute");
@@ -38,7 +38,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/webhook", webhookRoute);
 app.use("/admin", adminRoute);
-app.use("/api/admin", adminApiRoute);
+app.use("/api/admin", requireAdmin, adminApiRoute);
 
 app.get("/", (req, res) => {
   res.send("Homeclinic24 Healthcare Bot is live ✅");

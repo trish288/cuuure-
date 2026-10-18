@@ -9,7 +9,19 @@ const adminApiRoute = require("./routes/adminApiroute");
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:3039", credentials: true }));
+const allowedOrigins = [
+  "http://localhost:3039",
+  "http://localhost:5173",
+  "https://www.homeclinic24.com",
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -50,7 +50,7 @@ function requireDashboardAdmin(req, res, next) {
 // Dashboard
 router.get("/", requireDashboardAdmin, (req, res) => {
   res.sendFile(
-    path.join(__dirname, "..", "public", "admin.html")
+    path.join(__dirname, "..", "views", "admin.html")
   );
 });
 

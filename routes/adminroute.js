@@ -4,11 +4,22 @@ const path = require("path");
 const router = express.Router();
 
 const ADMINS = [
-  { username: "Benaka", password: "Benaka@123" },
-  { username: "Trisha", password: "Trisha@123" },
-  { username: "Nikhil", password: "Nikhil@123" },
-  { username: "Rohith", password: "Rohith@123" },
-  { username: "Shreyas", password: "Shreyas@123" },
+  {
+    username: "Trisha",
+    password: process.env.ADMIN_TRISHA_PASSWORD,
+  },
+  {
+    username: "Nikhil",
+    password: process.env.ADMIN_NIKHIL_PASSWORD,
+  },
+  {
+    username: "Rohith",
+    password: process.env.ADMIN_ROHITH_PASSWORD,
+  },
+  {
+    username: "Sushmitha",
+    password: process.env.ADMIN_SUSHMITHA_PASSWORD,
+  },
 ];
 
 // Admin login
@@ -16,9 +27,11 @@ router.post("/login", (req, res) => {
   const { username, password } = req.body || {};
 
   const isValid = ADMINS.some(
-    (admin) =>
-      admin.username === username &&
-      admin.password === password
+  (admin) =>
+    admin.username === username &&
+    typeof admin.password === "string" &&
+    admin.password.length > 0 &&
+    admin.password === password
   );
 
   if (!isValid) {
